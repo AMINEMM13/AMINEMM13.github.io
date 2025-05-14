@@ -1,94 +1,41 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>VideoApp 설치 및 실행</title>
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-</head>
-<body>
-  <h1>VideoApp 설치 및 실행</h1>
-
-  <!-- 설치 버튼은 항상 노출 -->
-  <p>먼저 아래 버튼을 눌러 VideoApp을 다운로드하고, 다운로드한 EXE를 실행하세요.</p>
-  <a href="https://drive.google.com/uc?export=download&id=10dMkvU8wIZznYfZZ3wPJnHkyeABNt-Bu">
-    <button type="button">앱 설치</button>
-  </a>
-
-  <hr>
-
-  <!-- 업로드 폼도 항상 노출 -->
+<head><meta charset="UTF-8"><title>VideoApp</title>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head><body>
+  <h1>VideoApp</h1>
+  <p>설치 후 업로드하세요.</p>
+  <!-- 설치 후 자동 호스트 리디렉션 덕분에 주소창은 https://aminemm13.github.io -->
   <div id="upload-section">
-    <h2>업로드 및 진행</h2>
     <form id="uploadForm" enctype="multipart/form-data">
-      <label for="textfile">텍스트 파일 (.txt)</label>
-      <input type="file" id="textfile" name="textfile" accept=".txt"><br>
-
-      <label for="images">이미지 파일</label>
-      <input type="file" id="images" name="images" multiple><br>
-
-      <label>웃음소리 넣기</label>
-      <input type="radio" name="laugh" value="1">예
-      <input type="radio" name="laugh" value="2" checked>아니오<br>
-
+      <label>텍스트(.txt)</label><input type="file" id="textfile" accept=".txt"><br>
+      <label>이미지</label><input type="file" id="images" multiple><br>
+      <label>웃음</label><input type="radio" name="laugh" value="1">예
+                    <input type="radio" name="laugh" value="2" checked>아니오<br>
       <button type="submit">실행</button>
     </form>
-    <div id="progress"><p>0% 진행 중…</p></div>
+    <div id="progress"><p>0%</p></div>
+    <div id="download-section" style="display:none;">
+      <a id="downloadLink"><button>다운로드</button></a>
+    </div>
   </div>
-
-  <div id="download-section" style="display:none;">
-    <h2>완료</h2>
-    <a id="downloadLink" href="#"><button type="button">비디오 다운로드</button></a>
-  </div>
-
   <script>
-    // 로컬 서버(앱) 확인
-    async function isLocalUp() {
-      try {
-        await axios.get('http://localhost:8329/');
-        return true;
-      } catch {
-        return false;
-      }
-    }
-
-    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      // 앱 설치 여부 확인
-      if (!await isLocalUp()) {
-        alert('앱을 설치하고 실행한 뒤 다시 시도하세요.');
-        return;
-      }
-
-      // 아래부터는 기존 POST & EventSource 로직
-      const txt = document.getElementById('textfile').files[0];
-      if (!txt || !txt.name.endsWith('.txt')) {
-        alert('텍스트(.txt)를 선택하세요.');
-        return;
-      }
-      const imgs = document.getElementById('images').files;
-      const laugh = document.querySelector('input[name="laugh"]:checked').value;
-      const fd = new FormData();
-      fd.append('textfile', txt);
-      for (let i = 0; i < imgs.length; i++) fd.append('images', imgs[i]);
-      fd.append('laugh', laugh);
-
-      try {
-        await axios.post('http://localhost:8329/', fd);
-        const evt = new EventSource('http://localhost:8329/progress');
-        evt.onmessage = (ev) => {
-          const p = parseInt(ev.data, 10);
-          document.getElementById('progress').innerHTML = `<p>${p}% 진행 중…</p>`;
-          if (p === 100) {
-            evt.close();
-            document.getElementById('download-section').style.display = 'block';
-            document.getElementById('downloadLink').href = `http://localhost:8329/download/${txt.name}`;
-          }
-        };
-      } catch(err) {
-        alert('오류: ' + err.message);
-      }
-    });
+  document.getElementById('uploadForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    // 포트 8329에서만 동작하므로, hosts 덕분에 요청은 localhost:8329로 감
+    const txt=document.getElementById('textfile').files[0];
+    if(!txt||!txt.name.endsWith('.txt')){alert('텍스트 선택');return;}
+    const imgs=document.getElementById('images').files;
+    const laugh=document.querySelector('input[name="laugh"]:checked').value;
+    const fd=new FormData(); fd.append('textfile',txt);
+    for(let f of imgs) fd.append('images',f); fd.append('laugh',laugh);
+    await axios.post('/',fd);
+    const es=new EventSource('/progress');
+    es.onmessage=e=>{const p=+e.data; document.getElementById('progress').innerHTML=`<p>${p}%</p>`; 
+      if(p===100){es.close();document.getElementById('download-section').style.display='block';
+        document.getElementById('downloadLink').href=`/download/${txt.name}`;}
+    };
+  });
   </script>
 </body>
 </html>
