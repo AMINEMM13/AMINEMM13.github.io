@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <!-- 반드시 UTF-8로 해석되도록 선언 (HTTP 헤더 없을 때도 적용) -->
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+  <title>비디오 생성</title>
+  <!-- <, > 제거 후 순수 URL만 기술 -->
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <h1>비디오 생성</h1>
+  <a href="/downloads/setup.exe">앱 설치</a>
+
+  <form id="uploadForm" enctype="multipart/form-data">
+    <label for="textfile">텍스트 파일 (.txt)</label>
+    <input type="file" id="textfile" name="textfile" accept=".txt"><br>
+
+    <label for="images">이미지 파일</label>
+    <input type="file" id="images" name="images" multiple><br>
+
+    <label for="laugh">웃음소리 넣기</label>
+    <input type="radio" id="laugh1" name="laugh" value="1">예
+    <input type="radio" id="laugh2" name="laugh" value="2" checked>아니오<br>
+
+    <button type="submit">실행</button>
+  </form>
+
+  <div id="progress">
+    <p>0% 진행 중…</p>
+  </div>
+  <div id="download" style="display: none;">
+    <a href="#" id="downloadLink">비디오 다운로드</a>
+  </div>
+
+  <script>
+    async function checkLocalServer() {
+      try {
+        await axios.get('http://localhost:8329/');
+        return true;
+      } catch (error) {
+        alert('앱이 설치되어 있지 않거나, 포트 8329를 사용하는 다른 프로그램이 실행 중입니다.');
+        return false;
+      }
+    }
+
+    window.onload = async function() {
+      if (!(await checkLocalServer())) {
+        document.getElementById('uploadForm').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const textFile = document.getElementById('textfile').files[0];
+        if (!textFile || !textFile.name.endsWith('.txt')) {
+          alert('텍스트 파일(.txt)을 선택하세요.');
+          return;
+        }
+
+        const imageFiles = document.getElementById('images').files;
+        const laugh = document.querySelector('input[name="laugh"]:checked').value;
+
+        const formData = new FormData();
+        formData.append('textfile', textFile);
+        for (let img of imageFiles) {
+          formData.append('images', img);
+        }
+        formData.append('laugh', laugh);
+
+        try {
+          await axios.post('http://localhost:8329/', formData);
+          const evtSrc = new EventSource('http://localhost:8329/progress');
+          evtSrc.onmessage = function(e) {
+            const pct = parseInt(e.data, 10);
+            document.getElementById('progress').innerHTML = `<p>${pct}% 진행 중…</p>`;
+            if (pct === 100) {
+              evtSrc.close();
+              document.getElementById('download').style.display = 'block';
+              document.getElementById('downloadLink').href = `http://localhost:8329/download/${textFile.name}`;
+            }
+          };
+        } catch (err) {
+          alert('오류 발생: ' + err.message);
+        }
+      });
+    };
+  </script>
+</body>
+</html>
