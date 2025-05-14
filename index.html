@@ -7,7 +7,7 @@
 </head>
 <body>
   <h1>VideoApp 설치 및 실행</h1>
-  <p>먼저 아래 버튼을 눌러 VideoApp을 다운로드하고, 설치 완료 후 다시 이 페이지로 돌아오세요.</p>
+  <p>먼저 아래 버튼을 눌러 VideoApp을 다운로드하고, 설치 완료 후 이 페이지로 돌아오세요.</p>
   <a href="https://drive.google.com/uc?export=download&id=10dMkvU8wIZznYfZZ3wPJnHkyeABNt-Bu" target="_blank">
     <button type="button">앱 설치</button>
   </a>
@@ -23,43 +23,71 @@
     <input type="radio" name="laugh" value="2" checked>아니오<br>
     <button type="submit">실행</button>
   </form>
-  <div id="progress"><p>0% 진행 중…</p></div>
+
+  <div id="progress">
+    <p>0% 진행 중…</p>
+  </div>
+
   <div id="download-section" style="display:none;">
     <h2>완료</h2>
-    <a id="downloadLink" href="#"><button type="button">비디오 다운로드</button></a>
+    <a id="downloadLink" href="#">
+      <button type="button">비디오 다운로드</button>
+    </a>
   </div>
 
   <script>
     async function isLocalUp() {
-      try { await axios.get(window.location.origin + '/'); return true; }
-      catch { return false; }
+      try {
+        // 설치된 로컬 Flask 서버 확인 (SSL 허용)
+        await axios.get(window.location.origin + '/');
+        return true;
+      } catch {
+        return false;
+      }
     }
 
     document.getElementById('uploadForm').addEventListener('submit', async e => {
       e.preventDefault();
+
+      // 로컬 앱 설치 여부 검사
       if (!await isLocalUp()) {
         alert('앱을 설치하고 실행한 뒤 다시 시도하세요.');
         return;
       }
+
+      // 텍스트 파일 유효성 검사
       const txt = document.getElementById('textfile').files[0];
-      if (!txt || !txt.name.endsWith('.txt')) { alert('텍스트(.txt)를 선택하세요.'); return; }
+      if (!txt || !txt.name.endsWith('.txt')) {
+        alert('텍스트(.txt) 파일을 선택하세요.');
+        return;
+      }
+
+      // 이미지 파일들, 웃음소리 옵션
       const imgs = document.getElementById('images').files;
       const laugh = document.querySelector('input[name="laugh"]:checked').value;
+
+      // FormData 로 POST
       const fd = new FormData();
       fd.append('textfile', txt);
       for (let f of imgs) fd.append('images', f);
       fd.append('laugh', laugh);
 
-      await axios.post(window.location.origin + '/', fd);
+      try {
+        await axios.post(window.location.origin + '/', fd);
+      } catch (err) {
+        alert('전송 오류: ' + err.message);
+        return;
+      }
 
+      // 진행률 SSE 구독
       const evt = new EventSource(window.location.origin + '/progress');
       evt.onmessage = ev => {
-        const p = +ev.data;
-        document.getElementById('progress').innerHTML = `<p>${p}% 진행 중…</p>`;
-        if (p === 100) {
+        const pct = parseInt(ev.data, 10);
+        document.getElementById('progress').innerHTML = `<p>${pct}% 진행 중…</p>`;
+        if (pct === 100) {
           evt.close();
           document.getElementById('download-section').style.display = 'block';
-          document.getElementById('downloadLink').href =
+          document.getElementById('downloadLink').href = 
             `${window.location.origin}/download/${txt.name}`;
         }
       };
