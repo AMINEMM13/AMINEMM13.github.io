@@ -2,45 +2,42 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>VideoApp 설치 및 실행</title>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 </head>
 <body>
   <h1>VideoApp 설치 및 실행</h1>
 
-  <!-- 1) 무조건 보이는 설치 버튼 -->
-  <p>먼저 아래 버튼을 눌러 VideoApp을 다운로드하고, 다운로드한 exe 파일을 실행하세요.</p>
+  <p>먼저 “앱 설치” 버튼을 눌러 프로그램을 다운로드하고, 다운로드한 EXE를 실행하세요.</p>
   <a href="https://drive.google.com/uc?export=download&id=10dMkvU8wIZznYfZZ3wPJnHkyeABNt-Bu">
     <button>앱 설치</button>
   </a>
 
   <hr>
 
-  <!-- 2) 로컬 서버가 살아 있을 때만 보이는 업로드 폼 -->
   <div id="upload-section" style="display:none;">
     <h2>업로드 및 진행</h2>
     <form id="uploadForm" enctype="multipart/form-data">
-      <label for="textfile">텍스트 파일 (.txt)</label>
+      <label>텍스트 파일 (.txt)</label>
       <input type="file" id="textfile" name="textfile" accept=".txt"><br>
-
-      <label for="images">이미지 파일</label>
+      <label>이미지 파일</label>
       <input type="file" id="images" name="images" multiple><br>
-
       <label>웃음소리 넣기</label>
       <input type="radio" name="laugh" value="1">예
       <input type="radio" name="laugh" value="2" checked>아니오<br>
-
       <button type="submit">실행</button>
     </form>
-    <div id="progress">
-      <p>0% 진행 중…</p>
-    </div>
+    <div id="progress"><p>0% 진행 중…</p></div>
+  </div>
+
+  <div id="download-section" style="display:none;">
+    <h2>완료</h2>
+    <a id="downloadLink" href="#"><button>비디오 다운로드</button></a>
   </div>
 
   <script>
-    // 로컬 서버 확인 함수 (절대 alert 없도록)
-    async function checkLocalServer() {
+    // 로컬 서버 체크(절대 alert 없음)
+    async function isLocalUp() {
       try {
         await axios.get('http://localhost:8329/');
         return true;
@@ -50,56 +47,45 @@
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
-      // 설치 버튼은 항상 보이고,
-      // 업로드 섹션은 로컬 서버가 살아 있을 때만 보이게
-      if (await checkLocalServer()) {
+      // 설치 후 로컬 서버가 켜져 있을 때만 업로드 폼 보이기
+      if (await isLocalUp()) {
         document.getElementById('upload-section').style.display = 'block';
       }
     });
 
-    // 폼 제출 핸들러 (기존 로직 그대로)
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('uploadForm');
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-
-        const textFile = document.getElementById('textfile').files[0];
-        if (!textFile || !textFile.name.endsWith('.txt')) {
-          alert('텍스트 파일(.txt)을 선택하세요.');
+        const txt = document.getElementById('textfile').files[0];
+        if (!txt || !txt.name.endsWith('.txt')) {
+          alert('텍스트(.txt)를 선택하세요.');
           return;
         }
-
-        const images = document.getElementById('images').files;
+        const imgs = document.getElementById('images').files;
         const laugh = document.querySelector('input[name="laugh"]:checked').value;
-        const formData = new FormData();
-        formData.append('textfile', textFile);
-        for (let img of images) formData.append('images', img);
-        formData.append('laugh', laugh);
+        const fd = new FormData();
+        fd.append('textfile', txt);
+        for (let i=0; i<imgs.length; i++) fd.append('images', imgs[i]);
+        fd.append('laugh', laugh);
 
         try {
-          await axios.post('http://localhost:8329/', formData);
+          await axios.post('http://localhost:8329/', fd);
           const evt = new EventSource('http://localhost:8329/progress');
-          evt.onmessage = (event) => {
-            const pct = parseInt(event.data, 10);
-            document.getElementById('progress').innerHTML = `<p>${pct}% 진행 중…</p>`;
-            if (pct === 100) {
+          evt.onmessage = (evt_) => {
+            const p = parseInt(evt_.data,10);
+            document.getElementById('progress').innerHTML = `<p>${p}% 진행 중…</p>`;
+            if (p===100) {
               evt.close();
-              const dl = document.getElementById('downloadLink');
               document.getElementById('download-section').style.display = 'block';
-              dl.href = `http://localhost:8329/download/${textFile.name}`;
+              document.getElementById('downloadLink').href = `http://localhost:8329/download/${txt.name}`;
             }
           };
-        } catch (err) {
-          alert('오류 발생: ' + err.message);
+        } catch(err) {
+          alert('오류: '+err.message);
         }
       });
     });
   </script>
-
-  <!-- 3) 진행 완료 후 다운로드 링크 (필요하면 추가) -->
-  <div id="download-section" style="display:none;">
-    <h2>완료</h2>
-    <a id="downloadLink" href="#"><button>비디오 다운로드</button></a>
-  </div>
 </body>
 </html>
