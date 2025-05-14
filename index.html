@@ -7,20 +7,17 @@
 </head>
 <body>
   <h1>VideoApp 설치 및 실행</h1>
-  <p>먼저 아래 버튼을 눌러 VideoApp을 다운로드하고, 설치를 완료하세요.</p>
-  <!-- Google Drive 다운로드 링크로 변경 -->
-  <a href="https://drive.google.com/file/d/10dMkvU8wIZznYfZZ3wPJnHkyeABNt-Bu/view?usp=sharing" target="_blank">
+  <p>먼저 아래 버튼을 눌러 VideoApp을 다운로드하고, 설치 완료 후 다시 이 페이지로 돌아오세요.</p>
+  <a href="https://drive.google.com/uc?export=download&id=10dMkvU8wIZznYfZZ3wPJnHkyeABNt-Bu" target="_blank">
     <button type="button">앱 설치</button>
   </a>
-
   <hr>
-
   <h2>업로드 및 진행</h2>
   <form id="uploadForm" enctype="multipart/form-data">
     <label>텍스트 파일 (.txt)</label>
-    <input type="file" id="textfile" name="textfile" accept=".txt"><br>
+    <input type="file" id="textfile" accept=".txt"><br>
     <label>이미지 파일</label>
-    <input type="file" id="images" name="images" multiple><br>
+    <input type="file" id="images" multiple><br>
     <label>웃음소리 넣기</label>
     <input type="radio" name="laugh" value="1">예
     <input type="radio" name="laugh" value="2" checked>아니오<br>
@@ -34,7 +31,7 @@
 
   <script>
     async function isLocalUp() {
-      try { await axios.get('http://localhost:8329/'); return true; }
+      try { await axios.get(window.location.origin + '/'); return true; }
       catch { return false; }
     }
 
@@ -53,16 +50,17 @@
       for (let f of imgs) fd.append('images', f);
       fd.append('laugh', laugh);
 
-      await axios.post('http://localhost:8329/', fd);
+      await axios.post(window.location.origin + '/', fd);
 
-      const evt = new EventSource('http://localhost:8329/progress');
+      const evt = new EventSource(window.location.origin + '/progress');
       evt.onmessage = ev => {
         const p = +ev.data;
         document.getElementById('progress').innerHTML = `<p>${p}% 진행 중…</p>`;
         if (p === 100) {
           evt.close();
           document.getElementById('download-section').style.display = 'block';
-          document.getElementById('downloadLink').href = `http://localhost:8329/download/${txt.name}`;
+          document.getElementById('downloadLink').href =
+            `${window.location.origin}/download/${txt.name}`;
         }
       };
     });
