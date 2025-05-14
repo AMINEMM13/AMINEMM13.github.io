@@ -8,23 +8,28 @@
 <body>
   <h1>VideoApp 설치 및 실행</h1>
 
-  <p>먼저 “앱 설치” 버튼을 눌러 프로그램을 다운로드하고, 다운로드한 EXE를 실행하세요.</p>
+  <!-- 설치 버튼은 항상 노출 -->
+  <p>먼저 아래 버튼을 눌러 VideoApp을 다운로드하고, 다운로드한 EXE를 실행하세요.</p>
   <a href="https://drive.google.com/uc?export=download&id=10dMkvU8wIZznYfZZ3wPJnHkyeABNt-Bu">
-    <button>앱 설치</button>
+    <button type="button">앱 설치</button>
   </a>
 
   <hr>
 
-  <div id="upload-section" style="display:none;">
+  <!-- 업로드 폼도 항상 노출 -->
+  <div id="upload-section">
     <h2>업로드 및 진행</h2>
     <form id="uploadForm" enctype="multipart/form-data">
-      <label>텍스트 파일 (.txt)</label>
+      <label for="textfile">텍스트 파일 (.txt)</label>
       <input type="file" id="textfile" name="textfile" accept=".txt"><br>
-      <label>이미지 파일</label>
+
+      <label for="images">이미지 파일</label>
       <input type="file" id="images" name="images" multiple><br>
+
       <label>웃음소리 넣기</label>
       <input type="radio" name="laugh" value="1">예
       <input type="radio" name="laugh" value="2" checked>아니오<br>
+
       <button type="submit">실행</button>
     </form>
     <div id="progress"><p>0% 진행 중…</p></div>
@@ -32,11 +37,11 @@
 
   <div id="download-section" style="display:none;">
     <h2>완료</h2>
-    <a id="downloadLink" href="#"><button>비디오 다운로드</button></a>
+    <a id="downloadLink" href="#"><button type="button">비디오 다운로드</button></a>
   </div>
 
   <script>
-    // 로컬 서버 체크(절대 alert 없음)
+    // 로컬 서버(앱) 확인
     async function isLocalUp() {
       try {
         await axios.get('http://localhost:8329/');
@@ -46,45 +51,43 @@
       }
     }
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      // 설치 후 로컬 서버가 켜져 있을 때만 업로드 폼 보이기
-      if (await isLocalUp()) {
-        document.getElementById('upload-section').style.display = 'block';
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      // 앱 설치 여부 확인
+      if (!await isLocalUp()) {
+        alert('앱을 설치하고 실행한 뒤 다시 시도하세요.');
+        return;
       }
-    });
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('uploadForm');
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const txt = document.getElementById('textfile').files[0];
-        if (!txt || !txt.name.endsWith('.txt')) {
-          alert('텍스트(.txt)를 선택하세요.');
-          return;
-        }
-        const imgs = document.getElementById('images').files;
-        const laugh = document.querySelector('input[name="laugh"]:checked').value;
-        const fd = new FormData();
-        fd.append('textfile', txt);
-        for (let i=0; i<imgs.length; i++) fd.append('images', imgs[i]);
-        fd.append('laugh', laugh);
+      // 아래부터는 기존 POST & EventSource 로직
+      const txt = document.getElementById('textfile').files[0];
+      if (!txt || !txt.name.endsWith('.txt')) {
+        alert('텍스트(.txt)를 선택하세요.');
+        return;
+      }
+      const imgs = document.getElementById('images').files;
+      const laugh = document.querySelector('input[name="laugh"]:checked').value;
+      const fd = new FormData();
+      fd.append('textfile', txt);
+      for (let i = 0; i < imgs.length; i++) fd.append('images', imgs[i]);
+      fd.append('laugh', laugh);
 
-        try {
-          await axios.post('http://localhost:8329/', fd);
-          const evt = new EventSource('http://localhost:8329/progress');
-          evt.onmessage = (evt_) => {
-            const p = parseInt(evt_.data,10);
-            document.getElementById('progress').innerHTML = `<p>${p}% 진행 중…</p>`;
-            if (p===100) {
-              evt.close();
-              document.getElementById('download-section').style.display = 'block';
-              document.getElementById('downloadLink').href = `http://localhost:8329/download/${txt.name}`;
-            }
-          };
-        } catch(err) {
-          alert('오류: '+err.message);
-        }
-      });
+      try {
+        await axios.post('http://localhost:8329/', fd);
+        const evt = new EventSource('http://localhost:8329/progress');
+        evt.onmessage = (ev) => {
+          const p = parseInt(ev.data, 10);
+          document.getElementById('progress').innerHTML = `<p>${p}% 진행 중…</p>`;
+          if (p === 100) {
+            evt.close();
+            document.getElementById('download-section').style.display = 'block';
+            document.getElementById('downloadLink').href = `http://localhost:8329/download/${txt.name}`;
+          }
+        };
+      } catch(err) {
+        alert('오류: ' + err.message);
+      }
     });
   </script>
 </body>
