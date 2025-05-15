@@ -18,21 +18,21 @@
       // 1) Pyodide 초기화
       const pyodide = await loadPyodide();
       
-      // 2) micropip 및 pyodide-http 설치
+      // 2) micropip 설치 및 requests, pyodide-http 설치
       await pyodide.loadPackage('micropip');
       await pyodide.runPythonAsync(`
 import micropip
 await micropip.install('pyodide-http')
+await micropip.install('requests')
 import pyodide_http
 pyodide_http.patch_all()
 `);
-      // :contentReference[oaicite:0]{index=0}
-
+      
       // 3) Python 코드 불러오기
       const response = await fetch('k1.py');
       const pythonCode = await response.text();
       
-      // 4) 코드 내 import 자동 패키지 로드
+      // 4) import 기반 패키지 자동 설치
       await pyodide.loadPackagesFromImports(pythonCode);
 
       // 5) 코드 실행

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'python-saas-cache-v4';
+const CACHE_NAME = 'python-saas-cache-v5';
 const urlsToCache = [
   '/',
   'index.html',
@@ -41,7 +41,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 그 외 리소스는 캐시 우선
+  // 그 외는 캐시 우선
   event.respondWith(
     caches.match(event.request)
           .then(resp => resp || fetch(event.request))
