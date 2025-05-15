@@ -1,13 +1,15 @@
-const CACHE_NAME = 'python-saas-cache-v3';
+const CACHE_NAME = 'python-saas-cache-v4';
 const urlsToCache = [
-  '/', 
-  'index.html', 
-  'k1.py', 
-  'manifest.json', 
+  '/',
+  'index.html',
+  'k1.py',
+  'manifest.json',
   'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js'
 ];
 
 self.addEventListener('install', event => {
+  // 최신 SW를 즉시 활성화
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
           .then(cache => cache.addAll(urlsToCache))
@@ -23,7 +25,7 @@ self.addEventListener('activate', event => {
           if (key !== CACHE_NAME) return caches.delete(key);
         }))
       ),
-      // 즉시 제어권 획득
+      // 활성화 후 제어권 즉시 획득
       self.clients.claim()
     ])
   );
@@ -32,7 +34,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // index.html 또는 루트 경로는 네트워크 우선
+  // index.html 또는 루트는 네트워크 우선
   if (url.pathname === '/' || url.pathname.endsWith('index.html')) {
     event.respondWith(
       fetch(event.request)
@@ -42,7 +44,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 그 외는 캐시 우선
+  // 그 외 리소스는 캐시 우선
   event.respondWith(
     caches.match(event.request)
           .then(resp => resp || fetch(event.request))
