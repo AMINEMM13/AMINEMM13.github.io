@@ -15,18 +15,23 @@
   
   <script>
     async function loadPyodideAndRun() {
-      // 1) Pyodide 초기화
+      // Pyodide 초기화
       const pyodide = await loadPyodide();
       
-      // 2) Python 코드 불러오기
+      // ─── 수정된 부분: micropip 로 numpy 설치 ───
+      await pyodide.loadPackage('micropip');
+      await pyodide.runPythonAsync(`
+import micropip
+await micropip.install("numpy")
+`);
+      // ─────────────────────────────────────────
+      
+      // k1.py 불러오기
       const response = await fetch('k1.py');
       const pythonCode = await response.text();
       
-      // 3) 코드 내 import 파싱해서 필요한 패키지 자동 설치
-      await pyodide.loadPackagesFromImports(pythonCode);
-      
-      // 4) 코드 실행
       try {
+        // Python 코드 실행
         const result = await pyodide.runPythonAsync(pythonCode);
         document.getElementById('output').innerText = result || "실행 완료!";
       } catch (err) {
@@ -37,7 +42,7 @@
 
     loadPyodideAndRun();
     
-    // Service Worker 등록 (파일명이 service-worker.js여야 합니다)
+    // Service Worker 등록
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
         .then(reg => console.log('Service Worker 등록 성공:', reg.scope))
