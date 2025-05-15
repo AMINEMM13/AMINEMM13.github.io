@@ -1,10 +1,10 @@
-const CACHE_NAME = 'python-saas-cache-v6';
+const CACHE_NAME = 'python-saas-cache-v7';
 const urlsToCache = [
   '/',
   'index.html',
   'k1.py',
   'manifest.json',
-  'https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js'
+  'https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js'
 ];
 
 self.addEventListener('install', event => {
@@ -18,7 +18,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     Promise.all([
-      caches.keys().then(keys =>
+      caches.keys().then(keys => 
         Promise.all(keys.map(key => {
           if (key !== CACHE_NAME) return caches.delete(key);
         }))
