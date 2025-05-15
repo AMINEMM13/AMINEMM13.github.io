@@ -9,32 +9,20 @@
 <body>
   <h1>내 Python 기반 서비스</h1>
   <div id="output">잠시만 기다려 주세요...</div>
-  
-  <!-- Pyodide 최신판 로드 -->
+
+  <!-- Pyodide 최신판(v0.27.5) 로드 -->
   <script src="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js"></script>
-  
+
   <script>
     async function loadPyodideAndRun() {
       // 1) Pyodide 초기화
       const pyodide = await loadPyodide();
-
-      // 2) 내장 패키지 로드: numpy, pillow, micropip
-      await pyodide.loadPackage(['numpy', 'pillow', 'micropip']);
-
-      // 3) micropip로 requests 및 pyodide-http 설치/패치
-      await pyodide.runPythonAsync(`
-import micropip
-await micropip.install('pyodide-http')
-await micropip.install('requests')
-import pyodide_http
-pyodide_http.patch_all()
-`);
-
-      // 4) k1.py 불러오기
-      const response = await fetch('k1.py');
+      // 2) numpy, pillow, requests 패키지 로드
+      await pyodide.loadPackage(['numpy', 'pillow', 'requests']);
+      // 3) k1.py?v=8 를 네트워크에서 강제 fetch
+      const response = await fetch('k1.py?v=8');
       const pythonCode = await response.text();
-
-      // 5) Python 코드 실행
+      // 4) Python 코드 실행
       try {
         const result = await pyodide.runPythonAsync(pythonCode);
         document.getElementById('output').innerText = result ?? "실행 완료!";

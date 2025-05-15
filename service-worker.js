@@ -1,15 +1,14 @@
-const CACHE_NAME = 'python-saas-cache-v7';
+const CACHE_NAME = 'python-saas-cache-v8';
 const urlsToCache = [
   '/',
   'index.html',
-  'k1.py',
+  'k1.py?v=8',
   'manifest.json',
   'https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js'
 ];
 
 self.addEventListener('install', event => {
-  // 새 SW 즉시 활성화
-  self.skipWaiting();
+  self.skipWaiting();  // 즉시 활성화
   event.waitUntil(
     caches.open(CACHE_NAME)
           .then(cache => cache.addAll(urlsToCache))
@@ -25,8 +24,7 @@ self.addEventListener('activate', event => {
           if (key !== CACHE_NAME) return caches.delete(key);
         }))
       ),
-      // 활성화 후 바로 페이지 제어
-      self.clients.claim()
+      self.clients.claim()  // 제어권 즉시 획득
     ])
   );
 });
