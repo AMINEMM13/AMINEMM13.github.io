@@ -2,76 +2,46 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>VideoApp 설치 및 실행</title>
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>내 Python SaaS 서비스</title>
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <h1>VideoApp 설치 및 실행</h1>
-  <p>먼저 아래 버튼을 눌러 VideoApp을 다운로드하고, 설치 완료 후 다시 이 페이지로 돌아오세요.</p>
-  <!-- Google Drive 직접 다운로드 링크 -->
-  <a href="https://drive.google.com/uc?export=download&id=10dMkvU8wIZznYfZZ3wPJnHkyeABNt-Bu" target="_blank">
-    <button type="button">앱 설치</button>
-  </a>
-  <hr>
-  <h2>업로드 및 진행</h2>
-  <form id="uploadForm" enctype="multipart/form-data">
-    <label>텍스트 파일 (.txt)</label>
-    <input type="file" id="textfile" accept=".txt"><br>
-    <label>이미지 파일</label>
-    <input type="file" id="images" multiple><br>
-    <label>웃음소리 넣기</label>
-    <input type="radio" name="laugh" value="1">예
-    <input type="radio" name="laugh" value="2" checked>아니오<br>
-    <button type="submit">실행</button>
-  </form>
-  <div id="progress"><p>0% 진행 중…</p></div>
-  <div id="download-section" style="display:none;">
-    <h2>완료</h2>
-    <a id="downloadLink" href="#"><button type="button">비디오 다운로드</button></a>
-  </div>
-
+  <h1>내 Python 기반 서비스</h1>
+  <div id="output">잠시만 기다려 주세요...</div>
+  
+  <!-- Pyodide 라이브러리 (CDN에서 불러오기) -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+  
   <script>
-    async function isLocalUp() {
-      try { await axios.get('https://aminemm13.github.io'); return true; }
-      catch { return false; }
+    async function loadPyodideAndRun() {
+      // Pyodide 초기화
+      const pyodide = await loadPyodide();
+      
+      // k1.py 파일을 fetch()로 불러옵니다.
+      const response = await fetch('k1.py');
+      const pythonCode = await response.text();
+      
+      // 필요 시, pyodide.loadPackage(['numpy', 'PIL', ...]); 를 추가하여 설치
+      
+      try {
+        // k1.py의 코드를 실행합니다.
+        const result = await pyodide.runPythonAsync(pythonCode);
+        document.getElementById('output').innerText = result || "실행 완료!";
+      } catch (error) {
+        console.error("Python 실행 오류:", error);
+        document.getElementById('output').innerText = "실행 중 오류 발생";
+      }
     }
-
-    document.getElementById('uploadForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      if (!await isLocalUp()) {
-        alert('앱을 설치하고 실행한 뒤 다시 시도하세요.');
-        return;
-      }
-      const txt = document.getElementById('textfile').files[0];
-      if (!txt || !txt.name.endsWith('.txt')) {
-        alert('텍스트(.txt)를 선택하세요.'); return;
-      }
-      const imgs = document.getElementById('images').files;
-      const laugh = document.querySelector('input[name="laugh"]:checked').value;
-      const fd = new FormData();
-      fd.append('textfile', txt);
-      for (let f of imgs) fd.append('images', f);
-      fd.append('laugh', laugh);
-
-      // 로컬 포트 8329 로 전송하려면 아래 두 줄을 주석 해제
-      // await axios.post('https://aminemm13.github.io:8329/', fd);
-      // const evt = new EventSource('https://aminemm13.github.io:8329/progress');
-
-      // 설치 시 portproxy 해두면 그냥 origin 으로
-      await axios.post(window.location.origin + '/', fd);
-      const evt = new EventSource(window.location.origin + '/progress');
-
-      evt.onmessage = ev => {
-        const p = +ev.data;
-        document.getElementById('progress').innerHTML = `<p>${p}% 진행 중…</p>`;
-        if (p === 100) {
-          evt.close();
-          document.getElementById('download-section').style.display = 'block';
-          document.getElementById('downloadLink').href =
-            `${window.location.origin}/download/${txt.name}`;
-        }
-      };
-    });
+    
+    loadPyodideAndRun();
+    
+    // Service Worker 등록 (PWA 기능)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('Service Worker 등록 성공:', reg.scope))
+        .catch(err => console.error('Service Worker 등록 실패:', err));
+    }
   </script>
 </body>
 </html>
