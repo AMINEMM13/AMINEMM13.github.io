@@ -17,28 +17,25 @@
     async function loadPyodideAndRun() {
       // Pyodide 초기화
       const pyodide = await loadPyodide();
-
-      // ─── 수정된 부분: numpy 로드 ───
+      
+      // ─── 수정된 부분: 내장 패키지 로더로 numpy 로드 ───
       await pyodide.loadPackage('numpy');
-      // ───────────────────────────────
+      // ────────────────────────────────────────────────
 
-      // k1.py 파일을 fetch()로 불러오기
+      // k1.py 파일을 fetch()로 불러옵니다.
       const response = await fetch('k1.py');
-      const code = await response.text();
-
-      // 파일 시스템에 쓰기
-      pyodide.FS.writeFile('k1.py', code);
-
+      const pythonCode = await response.text();
+      
       try {
-        // Python 코드 실행
-        await pyodide.runPythonAsync(code);
-        document.getElementById('output').innerText = "실행 완료";
-      } catch (err) {
-        document.getElementById('output').innerText = "실행 중 오류: " + err;
-        console.error(err);
+        // k1.py의 코드를 실행합니다.
+        const result = await pyodide.runPythonAsync(pythonCode);
+        document.getElementById('output').innerText = result || "실행 완료!";
+      } catch (error) {
+        console.error("Python 실행 오류:", error);
+        document.getElementById('output').innerText = "실행 중 오류 발생";
       }
     }
-
+    
     loadPyodideAndRun();
     
     // Service Worker 등록 (파일명이 service-worker.js여야 합니다)

@@ -14,6 +14,13 @@ self.addEventListener('install', event => {
   );
 });
 
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+          .then(response => response || fetch(event.request))
+  );
+});
+
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -26,14 +33,7 @@ self.addEventListener('activate', event => {
       );
     })
   );
-  // ─── 수정된 부분: 활성화 즉시 제어권 획득 ───
+  // ─── 수정된 부분: 업데이트된 SW가 즉시 페이지를 제어하도록 ───
   event.waitUntil(self.clients.claim());
-  // ─────────────────────────────────────────
-});
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
+  // ───────────────────────────────────────────────────────────
 });
