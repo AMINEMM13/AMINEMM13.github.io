@@ -8,6 +8,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
+  // 새 SW 즉시 활성화
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -18,11 +19,13 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     Promise.all([
-      caches.keys().then(keys => 
+      // 구버전 캐시 삭제
+      caches.keys().then(keys =>
         Promise.all(keys.map(key => {
           if (key !== CACHE_NAME) return caches.delete(key);
         }))
       ),
+      // 활성화 후 바로 페이지 제어
       self.clients.claim()
     ])
   );

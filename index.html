@@ -10,26 +10,33 @@
   <h1>내 Python 기반 서비스</h1>
   <div id="output">잠시만 기다려 주세요...</div>
   
-  <!-- Pyodide 최신판(v0.27.5) 로드 -->
+  <!-- Pyodide 최신판 로드 -->
   <script src="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js"></script>
   
   <script>
     async function loadPyodideAndRun() {
       // 1) Pyodide 초기화
-      const pyodide = await loadPyodide({
-        indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.5/full/"
-      });
+      const pyodide = await loadPyodide();
 
-      // 2) 필요한 패키지 명시적 로드
-      // numpy, pillow, requests 모두 Pyodide 배포판에 포함되어 있습니다 :contentReference[oaicite:0]{index=0}
-      await pyodide.loadPackage(['numpy','pillow','requests']); :contentReference[oaicite:1]{index=1}
+      // 2) 내장 패키지 로드: numpy, pillow, micropip
+      await pyodide.loadPackage(['numpy', 'pillow', 'micropip']);
 
-      // 3) Python 코드 불러오기
-      const code = await (await fetch('k1.py')).text();
+      // 3) micropip로 requests 및 pyodide-http 설치/패치
+      await pyodide.runPythonAsync(`
+import micropip
+await micropip.install('pyodide-http')
+await micropip.install('requests')
+import pyodide_http
+pyodide_http.patch_all()
+`);
 
-      // 4) 코드 실행
+      // 4) k1.py 불러오기
+      const response = await fetch('k1.py');
+      const pythonCode = await response.text();
+
+      // 5) Python 코드 실행
       try {
-        const result = await pyodide.runPythonAsync(code);
+        const result = await pyodide.runPythonAsync(pythonCode);
         document.getElementById('output').innerText = result ?? "실행 완료!";
       } catch (err) {
         console.error("Python 실행 오류:", err);
