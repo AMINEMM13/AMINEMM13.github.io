@@ -10,7 +10,7 @@
   <h1>내 Python 기반 서비스</h1>
   <div id="output">잠시만 기다려 주세요...</div>
   
-  <!-- Pyodide 라이브러리 (CDN에서) -->
+  <!-- Pyodide 라이브러리 (CDN에서 불러오기) -->
   <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
   
   <script>
@@ -18,8 +18,7 @@
       // Pyodide 초기화
       const pyodide = await loadPyodide();
       
-      // micropip 를 사용해 numpy 설치하기
-      // micropip 는 Pyodide에 기본 포함되어 있습니다.
+      // micropip를 사용해 numpy 설치 (이 코드를 추가하세요)
       await pyodide.runPythonAsync(`
         import micropip
         await micropip.install("numpy")
@@ -30,7 +29,7 @@
       const pythonCode = await response.text();
       
       try {
-        // k1.py 실행
+        // k1.py의 코드를 실행합니다.
         const result = await pyodide.runPythonAsync(pythonCode);
         document.getElementById('output').innerText = result || "실행 완료!";
       } catch (error) {
@@ -41,7 +40,7 @@
     
     loadPyodideAndRun();
     
-    // Service Worker 등록 (파일명이 service-worker.js로 수정되어 있어야 합니다)
+    // Service Worker 등록 (파일명이 service-worker.js여야 합니다)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
         .then(reg => console.log('Service Worker 등록 성공:', reg.scope))
