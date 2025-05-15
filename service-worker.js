@@ -1,10 +1,10 @@
-const CACHE_NAME = 'python-saas-cache-v5';
+const CACHE_NAME = 'python-saas-cache-v6';
 const urlsToCache = [
   '/',
   'index.html',
   'k1.py',
   'manifest.json',
-  'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js'
+  'https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js'
 ];
 
 self.addEventListener('install', event => {
@@ -18,7 +18,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     Promise.all([
-      caches.keys().then(keys => 
+      caches.keys().then(keys =>
         Promise.all(keys.map(key => {
           if (key !== CACHE_NAME) return caches.delete(key);
         }))
@@ -41,7 +41,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 그 외는 캐시 우선
+  // 그 외 리소스는 캐시 우선
   event.respondWith(
     caches.match(event.request)
           .then(resp => resp || fetch(event.request))

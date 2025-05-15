@@ -10,35 +10,25 @@
   <h1>내 Python 기반 서비스</h1>
   <div id="output">잠시만 기다려 주세요...</div>
   
-  <!-- Pyodide 라이브러리 (CDN에서 불러오기) -->
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+  <!-- Pyodide 최신 버전(v0.27.0) 로드 -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js"></script>
   
   <script>
     async function loadPyodideAndRun() {
       // 1) Pyodide 초기화
       const pyodide = await loadPyodide();
-      
-      // 2) micropip 설치 및 requests, pyodide-http 설치
-      await pyodide.loadPackage('micropip');
-      await pyodide.runPythonAsync(`
-import micropip
-await micropip.install('pyodide-http')
-await micropip.install('requests')
-import pyodide_http
-pyodide_http.patch_all()
-`);
-      
-      // 3) Python 코드 불러오기
+
+      // 2) 코드 가져오기
       const response = await fetch('k1.py');
       const pythonCode = await response.text();
-      
-      // 4) import 기반 패키지 자동 설치
+
+      // 3) import 문 기반으로 필요한 패키지(배포판 제공) 로드
       await pyodide.loadPackagesFromImports(pythonCode);
 
-      // 5) 코드 실행
+      // 4) Python 실행
       try {
         const result = await pyodide.runPythonAsync(pythonCode);
-        document.getElementById('output').innerText = result || "실행 완료!";
+        document.getElementById('output').innerText = result ?? "실행 완료!";
       } catch (err) {
         console.error("Python 실행 오류:", err);
         document.getElementById('output').innerText = "실행 중 오류 발생";
