@@ -1,4 +1,4 @@
-const CACHE_NAME = 'python-saas-cache-v2';  // v1 → v2로 버전업
+const CACHE_NAME = 'python-saas-cache-v2';
 const urlsToCache = [
   '/',
   'index.html',
@@ -14,8 +14,6 @@ self.addEventListener('install', event => {
   );
 });
 
-...
-
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -28,8 +26,14 @@ self.addEventListener('activate', event => {
       );
     })
   );
-  // ─── 여기를 추가 ───
-  // 업데이트된 SW가 즉시 페이지를 제어하도록
+  // ─── 수정된 부분: 활성화 즉시 제어권 획득 ───
   event.waitUntil(self.clients.claim());
-  // ───────────────────
+  // ─────────────────────────────────────────
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+  );
 });
