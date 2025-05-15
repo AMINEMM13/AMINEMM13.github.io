@@ -18,7 +18,7 @@
       // Pyodide 초기화
       const pyodide = await loadPyodide();
       
-      // micropip를 사용해 numpy 설치 (이 코드를 추가하세요)
+      // micropip를 사용해 numpy를 설치합니다.
       await pyodide.runPythonAsync(`
         import micropip
         await micropip.install("numpy")
