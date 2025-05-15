@@ -16,11 +16,7 @@ except ImportError:
             pass
 import textwrap
 try:
-    from moviepy import (
-        ImageClip, TextClip, AudioFileClip,
-        CompositeVideoClip, concatenate_videoclips,
-        VideoFileClip, VideoClip
-    )
+    from moviepy import ImageClip, TextClip, AudioFileClip, CompositeVideoClip, concatenate_videoclips, VideoFileClip, VideoClip
     from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 except ImportError:
     # Pyodide 환경에서 moviepy 미설치 시 임시 더미 정의
@@ -40,7 +36,7 @@ import soundfile as sf
 import shutil  # 결과 폴더로 파일 복사에 사용
 import sys
 
-# 진행률 파일 기록 함수 추가
+# 진행률 파일 기록 함수 추가 (추가된 부분)
 BASE = os.path.dirname(__file__)
 def write_progress(pct: int):
     """outputs/progress.txt 에 'PROGRESS:xx' 형식으로 진행률 기록"""
@@ -50,6 +46,7 @@ def write_progress(pct: int):
     mode = "w" if pct == 0 else "a"
     with open(progfile, mode, encoding="utf-8") as f:
         f.write(f"PROGRESS:{pct}\n")
+# ────────────────────────────────────────────────────────────────────────────
 
 # ZoomImageSequenceClip 클래스
 class ZoomImageSequenceClip(ImageSequenceClip):
@@ -152,8 +149,8 @@ def create_headline_text_image(text, font_path, target_resolution):
         y += line_height
     return img
 
-# 비디오 클립 커스터마이징 함수 등 (원본 그대로 유지)…
-# 이하 원본 코드 전체(생략 없음) 이어서 포함
+# 비디오 클립 커스터마이징 함수, 필름 카운트다운, TTS 생성 등 이하 원본 로직 그대로 유지…
+
 async def main():
     try:
         write_progress(0)
