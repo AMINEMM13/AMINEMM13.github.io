@@ -18,11 +18,12 @@
       // Pyodide 초기화
       const pyodide = await loadPyodide();
       
+      // numpy 패키지를 명시적으로 로드 --> 추가된 부분
+      await pyodide.loadPackage("numpy");
+
       // k1.py 파일을 fetch()로 불러옵니다.
       const response = await fetch('k1.py');
       const pythonCode = await response.text();
-      
-      // 필요 시, pyodide.loadPackage(['numpy', 'PIL', ...]); 를 추가하여 설치
       
       try {
         // k1.py의 코드를 실행합니다.
