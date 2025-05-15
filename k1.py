@@ -5,7 +5,15 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 import json
 import time
-from pydub import AudioSegment
+try:
+    from pydub import AudioSegment
+except ImportError:
+    class AudioSegment:
+        @staticmethod
+        def from_file(file, format=None):
+            return AudioSegment()
+        def export(self, out_f, format=None):
+            pass
 import textwrap
 from moviepy import ImageClip, TextClip, AudioFileClip, CompositeVideoClip, concatenate_videoclips, VideoFileClip, VideoClip
 from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
